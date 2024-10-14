@@ -1,0 +1,49 @@
+name: Build Aravis
+
+# 触发条件：当推送到 main 分支、aravis-0-8 分支或手动触发时
+on:
+  push:
+    branches:
+      - main
+      - aravis-0-8
+  pull_request:
+    branches:
+      - main
+      - aravis-0-8
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: 检出仓库的代码
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Step 2: 安装依赖
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y meson ninja-build libglib2.0-dev libusb-1.0-0-dev gstreamer1.0-dev valgrind libgtk-3-dev
+
+      # Step 3: 配置项目（使用 Meson）
+      - name: Configure project
+        run: |
+          meson setup build
+
+      # Step 4: 编译项目（使用 Ninja）
+      - name: Build project
+        run: |
+          ninja -C build
+
+      # Step 5: 运行测试
+      - name: Run tests
+        run: meson test -C build/ -v
+
+      # Step 6: 上传构建产物（可选）
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: aravis-build
+          path: build/
